@@ -1,0 +1,88 @@
+/* Navbar styles */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Logo section */
+.logo-container {
+    flex: 1;
+}
+
+.navbar .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-decoration: none;
+    color: #333;
+}
+
+/* Navigation links container */
+.links-container {
+    display: flex;
+    align-items: center;
+}
+
+.nav-list {
+    display: flex;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-item {
+    margin-left: 20px;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #007bff;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #0056b3;
+}
+
+/* User actions section */
+.user-actions {
+    display: flex;
+    align-items: center;
+    margin-left: 20px;
+}
+
+.display-name {
+    margin-right: 10px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.logout-button {
+    background-color: transparent;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.logout-button:hover {
+    color: #0056b3;
+}
+
+.login-link {
+    font-size: 1rem;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.login-link:hover {
+    color: #0056b3;
+}
