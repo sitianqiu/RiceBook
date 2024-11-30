@@ -9,8 +9,12 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn, setLogoutMessage, displayName }) =>
     const handleLogout = async () => {
         try {
             // Make a request to the backend to log out
-            await axios.put('http://localhost:3000/logout', {});
-
+            await axios.put(
+                'http://localhost:3000/logout',
+                {},
+                { withCredentials: true } // Enable sending cookies
+            );
+    
             // Update the frontend state
             setIsLoggedIn(false);  
             setLogoutMessage('You have successfully logged out.'); 
@@ -19,8 +23,8 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn, setLogoutMessage, displayName }) =>
             console.error('Error during logout:', error);
             alert('Failed to logout. Please try again.');
         }
-    };
-
+    };    
+         
     return (
         <nav className="navbar">
             <div className="logo-container">

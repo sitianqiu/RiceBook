@@ -4,7 +4,9 @@ import { getPosts, getUsers } from '../../services/mainService';
 
 const MainPage = ({ loggedInUser }) => {
     const storedHeadline = localStorage.getItem('statusHeadline');
-    const [statusHeadline, setStatusHeadline] = useState(storedHeadline || loggedInUser.company.catchPhrase);
+    const [statusHeadline, setStatusHeadline] = useState(
+        localStorage.getItem('statusHeadline') || loggedInUser?.company?.catchPhrase || 'Default Headline'
+      );      
     const [newStatusHeadline, setNewStatusHeadline] = useState('');
     const [posts, setPosts] = useState([]);
     const [newPostTitle, setNewPostTitle] = useState('');  

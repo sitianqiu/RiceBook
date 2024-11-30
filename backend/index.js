@@ -13,20 +13,34 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+
+// CORS Configuration
+app.use(
+  cors({
+    origin: 'http://localhost:3001', // 明确指定前端地址
+    credentials: true,               // 允许跨域发送 Cookie
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // 支持的 HTTP 方法
+    allowedHeaders: 'Content-Type,Authorization', // 支持的头部
+  })
+);
+
+// Handle OPTIONS Preflight Requests
+app.options('*', cors());
+
+// Session Configuration
 app.use(
   session({
     secret: 'secretKey',
-    resave: true,
-    saveUninitialized: true,
-    httpOnly: true,
+    resave: false, // 仅在必要时保存会话
+    saveUninitialized: false, // 未修改的会话不存储
     store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI,
+      mongoUrl: process.env.MONGO_URI, // MongoDB URI
     }),
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 1000 * 60 * 60,
+      secure: process.env.NODE_ENV === 'production', // 仅在生产环境中使用 HTTPS
+      sameSite: 'lax', // 防止跨站请求伪造
+      maxAge: 1000 * 60 * 60, // 1 小时
     },
   })
 );

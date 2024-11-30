@@ -46,18 +46,20 @@ const logout = (req, res) => {
     console.log('Session before logout:', req.session);
     console.log('Cookies received:', req.headers.cookie); // Should log connect.sid
 
-    if (!req.session?.user) {
-        console.error('No session or user found during logout');
-        return res.status(401).send({ error: 'No active session to log out' });
-    }
-
+    // Destroy the session
     req.session.destroy((err) => {
         if (err) {
             console.error('Error destroying session:', err);
             return res.status(500).send({ error: 'Failed to log out' });
         }
 
-        res.clearCookie('connect.sid'); // Clear the session cookie
+        // Clear the cookie
+        res.clearCookie('connect.sid', {
+            path: '/', 
+            httpOnly: true,
+            secure: false, // Change to true if using HTTPS
+            sameSite: 'lax',
+        });
         console.log('User logged out successfully');
         res.status(200).send({ message: 'Logged out successfully' });
     });
