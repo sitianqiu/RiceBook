@@ -17,10 +17,10 @@ app.use(express.urlencoded({ extended: true }));
 // CORS Configuration
 app.use(
   cors({
-    origin: 'http://localhost:3001', // 明确指定前端地址
-    credentials: true,               // 允许跨域发送 Cookie
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // 支持的 HTTP 方法
-    allowedHeaders: 'Content-Type,Authorization', // 支持的头部
+    origin: 'http://localhost:3001', 
+    credentials: true,               
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', 
+    allowedHeaders: 'Content-Type,Authorization', 
   })
 );
 
