@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Landing.css';
-import { validateAccountName, validateEmail, validatePhone, validateZipcode } from '../../services/validation';
+import { validateAccountName, validateEmail, validatePhone, validateZipcode, validateDOB } from '../../services/validation';
 import axios from 'axios';
 
 const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
@@ -13,6 +13,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newZipcode, setNewZipcode] = useState('');
+  const [newDOB, setNewDOB] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -56,6 +57,9 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
       if (!validateZipcode(newZipcode)) {
         errorMessages.push('Invalid Zip code. It must be exactly 5 digits.');
       }
+      if (!validateDOB(newDOB)) {
+        errorMessages.push('You must be at least 18 years old to register.');
+      }
       if (newPassword !== confirmPassword) {
         errorMessages.push('Passwords do not match.');
       }
@@ -70,6 +74,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
               email: newEmail,
               phone: newPhone,
               zipcode: newZipcode,
+              dob: newDOB,
               password: newPassword,
           };
 
@@ -161,6 +166,15 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
               onChange={(e) => setNewZipcode(e.target.value)}
               className="form-control"
               placeholder="Enter zip code"
+            />
+          </div>
+          <div className="form-group">
+            <label>Date of Birth</label>
+            <input
+              type="date"
+              value={newDOB}
+              onChange={(e) => setNewDOB(e.target.value)}
+              className="form-control"
             />
           </div>
           <div className="form-group">

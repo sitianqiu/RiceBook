@@ -1,5 +1,7 @@
 const Profile = require('./models/Profile');
 const { isLoggedIn } = require('./auth');
+const bcrypt = require('bcrypt');
+const User = require('./models/User');
 
 // Helper function to retrieve a specific field dynamically
 const getField = async (req, res, field) => {
@@ -33,60 +35,10 @@ const updateField = async (req, res, field) => {
   }
 };
 
-// Stubbed responses
-const stubbedResponses = {
-  password: { username: 'dummyUser', result: 'success' },
-  email: { username: 'dummyUser', email: 'dummy@example.com' },
-  zipcode: { username: 'dummyUser', zipcode: '12345' },
-  avatar: { username: 'dummyUser', avatar: 'https://dummyimage.com/150' },
-  phone: { username: 'dummyUser', phone: '123-456-7890' },
-  dob: { username: 'dummyUser', dob: '1990-01-01' },
-};
-
-// Stubbed endpoints
-const stubUpdatePassword = (req, res) => {
-  res.send(stubbedResponses.password);
-};
-
-const stubGetEmail = (req, res) => {
-  res.send(stubbedResponses.email);
-};
-
-const stubUpdateEmail = (req, res) => {
-  res.send(stubbedResponses.email);
-};
-
-const stubGetZipcode = (req, res) => {
-  res.send(stubbedResponses.zipcode);
-};
-
-const stubUpdateZipcode = (req, res) => {
-  res.send(stubbedResponses.zipcode);
-};
-
-const stubGetAvatar = (req, res) => {
-  res.send(stubbedResponses.avatar);
-};
-
-const stubUpdateAvatar = (req, res) => {
-  res.send(stubbedResponses.avatar);
-};
-
-const stubGetPhone = (req, res) => {
-  res.send(stubbedResponses.phone);
-};
-
-const stubUpdatePhone = (req, res) => {
-  res.send(stubbedResponses.phone);
-};
-
-const stubGetDob = (req, res) => {
-  res.send(stubbedResponses.dob);
-};
-
 // Dynamic endpoints for profile
 const getProfile = async (req, res) => {
   const username = req.params.user || req.user.username;
+  console.log(`Fetching profile for user: ${username}`);
   try {
     const user = await Profile.findOne({ username });
     if (!user) return res.status(404).send({ error: 'User not found' });
@@ -145,6 +97,37 @@ const updateHeadline = async (req, res) => {
       res.status(500).send({ error: 'Internal server error' });
     }
 };
+
+// Password update endpoint
+const updatePassword = async (req, res) => {
+  const username = req.user.username; // Assuming `req.user` is populated by middleware
+  const { password } = req.body;
+
+  if (!password) {
+    return res.status(400).send({ error: 'Password is required' });
+  }
+
+  try {
+    const salt = await bcrypt.genSalt(10); // Generate a salt
+    const hashedPassword = await bcrypt.hash(password, salt); // Hash the new password
+
+    const user = await User.findOneAndUpdate(
+      { username },
+      { password: hashedPassword, salt },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).send({ error: 'User not found' });
+    }
+
+    res.send({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).send({ error: 'Internal server error' });
+  }
+};
+
   
 // Export routes
 module.exports = (app) => {
@@ -152,23 +135,25 @@ module.exports = (app) => {
   app.get('/profile/:user?', isLoggedIn, getProfile);
   app.put('/profile', isLoggedIn, updateProfile);
 
-  app.get('/headline/:user?', isLoggedIn, getHeadline);
-  app.put('/headline', isLoggedIn, updateHeadline);
+  app.get('/headline/:user?', isLoggedIn, (req, res) => getField(req, res, 'headline'));
+  app.put('/headline', isLoggedIn, (req, res) => updateField(req, res, 'headline'));
 
-  // Stubbed endpoints
-  app.put('/password', stubUpdatePassword);
+  app.get('/email/:user?', isLoggedIn, (req, res) => getField(req, res, 'email'));
+  app.put('/email', isLoggedIn, (req, res) => updateField(req, res, 'email'));
 
-  app.get('/email/:user?', stubGetEmail);
-  app.put('/email', stubUpdateEmail);
+  app.get('/zipcode/:user?', isLoggedIn, (req, res) => getField(req, res, 'zipcode'));
+  app.put('/zipcode', isLoggedIn, (req, res) => updateField(req, res, 'zipcode'));
 
-  app.get('/zipcode/:user?', stubGetZipcode);
-  app.put('/zipcode', stubUpdateZipcode);
+  app.get('/avatar/:user?', isLoggedIn, (req, res) => getField(req, res, 'avatar'));
+  app.put('/avatar', isLoggedIn, (req, res) => updateField(req, res, 'avatar'));
 
-  app.get('/avatar/:user?', stubGetAvatar);
-  app.put('/avatar', stubUpdateAvatar);
+  app.get('/phone/:user?', isLoggedIn, (req, res) => getField(req, res, 'phone'));
+  app.put('/phone', isLoggedIn, (req, res) => updateField(req, res, 'phone'));
 
-  app.get('/phone/:user?', stubGetPhone);
-  app.put('/phone', stubUpdatePhone);
+  app.get('/dob/:user?', isLoggedIn, (req, res) => getField(req, res, 'dob'));
 
-  app.get('/dob/:user?', stubGetDob);
+  app.put('/password', isLoggedIn, updatePassword);
+
+  // app.get('/headline/:user?', isLoggedIn, getHeadline);
+  // app.put('/headline', isLoggedIn, updateHeadline);
 };

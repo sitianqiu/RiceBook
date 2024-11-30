@@ -5,11 +5,7 @@ const express = require('express');
 
 // Middleware
 const isLoggedIn = (req, res, next) => {
-    console.log('Session:', req.session); // Log session details
-    console.log('Cookies:', req.headers.cookie); // Log cookies specifically
-
-
-    if (!req.session?.user?.username) {
+    if (!req.session || !req.session.user) {
         console.error('Unauthorized request: No active session');
         return res.status(401).send({ error: 'Unauthorized' });
     }
@@ -46,6 +42,12 @@ const logout = (req, res) => {
     console.log('Session before logout:', req.session);
     console.log('Cookies received:', req.headers.cookie); // Should log connect.sid
 
+    if (!req.session) {
+        console.warn('No active session to log out');
+        res.clearCookie('connect.sid');
+        return res.status(200).send({ message: 'Logged out successfully (no active session)' });
+    }
+
     // Destroy the session
     req.session.destroy((err) => {
         if (err) {
@@ -71,8 +73,8 @@ const register = async (req, res) => {
 
     try {
         // Validate required fields
-        if (!username || !email || !password || !phone || !zipcode) {
-            return res.status(400).send({ error: 'Missing required fields' });
+        if (!username || !email || !password || !phone || !zipcode || !dob) {
+            return res.status(400).send({ error: 'Missing required fields. Date of birth is mandatory.' });
         }
 
         // Check for existing user
@@ -100,7 +102,7 @@ const register = async (req, res) => {
             userId: newUser._id,
             username,
             email,
-            dob: dob || null,
+            dob: dob,
             phone,
             zipcode,
             headline: headline || 'Hello World!',
@@ -134,7 +136,7 @@ module.exports = (app) => {
   app.post('/login', login);
   app.post('/register', register);
   app.get('/users', getUsers);
-  app.put('/logout', logout);
+  app.put('/logout', isLoggedIn, logout);
   app.use(isLoggedIn); 
 };
 

@@ -1,18 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
-import { validateEmail, validatePhone, validateZipcode } from '../../services/validation';
+import { validateEmail, validatePhone, validateZipcode, validateDOB } from '../../services/validation';
+import axios from 'axios';
 
 const ProfilePage = ({ updateUser, loggedInUser }) => {
-  const [newEmail, setNewEmail] = useState(loggedInUser.email || '');
-  const [newPhone, setNewPhone] = useState(loggedInUser.phone || '');
-  const [newZipcode, setNewZipcode] = useState(loggedInUser.address?.zipcode || ''); 
-  const [newPassword, setNewPassword] = useState(''); 
+  const [profileData, setProfileData] = useState(null);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newZipcode, setNewZipcode] = useState('');
+  const [newDOB, setNewDOB] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [profilePicture, setProfilePicture] = useState(loggedInUser.profilePicture || '/profile.jpeg');
+  const [profilePicture, setProfilePicture] = useState('/profile.jpeg');
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Fetch profile data from the API
+    const fetchProfile = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/profile', {
+          withCredentials: true, // Send cookies for authentication
+        });
+        const data = response.data;
+
+        // Set the fetched profile data
+        setProfileData(data);
+        setNewEmail(data.email || '');
+        setNewPhone(data.phone || '');
+        setNewZipcode(data.zipcode || '');
+        setNewDOB(data.dob || '');
+        setProfilePicture(data.avatar || '/profile.jpeg');
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        setMessage('Failed to fetch profile data. Please try again later.');
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleProfilePictureChange = (e) => {
     const file = e.target.files[0];
@@ -22,55 +50,99 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
     }
   };
 
-  const handleUpdate = () => {
+  const updateField = async (field, value) => {
+    try {
+      const response = await axios.put('http://localhost:3000/${field}', { [field]: value }, {
+        withCredentials: true, // Send cookies for authentication
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating ${field}:`, error);
+      throw new Error(`Failed to update ${field}`);
+    }
+  };
+
+  const handleUpdate = async () => {
     let changes = [];
     let errorMessages = [];
 
-    if (newEmail && newEmail !== loggedInUser.email) {
-      if (validateEmail(newEmail)) {
-        changes.push(`Email updated from ${loggedInUser.email} to ${newEmail}`);
-        updateUser({ ...loggedInUser, email: newEmail });
-      } else {
-        errorMessages.push('Invalid email address.');
+    try {
+      // Check Email
+      if (newEmail && newEmail !== profileData.email) {
+        if (validateEmail(newEmail)) {
+          await updateField('email', newEmail);
+          changes.push(`Email updated to ${newEmail}`);
+        } else {
+          errorMessages.push('Invalid email address.');
+        }
       }
-    }
 
-    // Check Phone
-    if (newPhone && newPhone !== loggedInUser.phone) {
-      if (validatePhone(newPhone)) {
-        changes.push(`Phone updated from ${loggedInUser.phone} to ${newPhone}`);
-        updateUser({ ...loggedInUser, phone: newPhone });
-      } else {
-        errorMessages.push('Invalid phone number. Must be exactly 10 digits.');
+      // Check Phone
+      if (newPhone && newPhone !== profileData.phone) {
+        if (validatePhone(newPhone)) {
+          await updateField('phone', newPhone);
+          changes.push(`Phone updated to ${newPhone}`);
+        } else {
+          errorMessages.push('Invalid phone number. Must be exactly 10 digits.');
+        }
       }
-    }
 
-    // Check Zipcode
-    if (newZipcode && newZipcode !== loggedInUser.address?.zipcode) {
-      if (validateZipcode(newZipcode)) {
-        changes.push(`Zipcode updated from ${loggedInUser.address?.zipcode} to ${newZipcode}`);
-        updateUser({ ...loggedInUser, address: { ...loggedInUser.address, zipcode: newZipcode } });
-      } else {
-        errorMessages.push('Invalid zip code. Must be exactly 5 digits.');
+      // Check Zipcode
+      if (newZipcode && newZipcode !== profileData.zipcode) {
+        if (validateZipcode(newZipcode)) {
+          await updateField('zipcode', newZipcode);
+          changes.push(`Zipcode updated to ${newZipcode}`);
+        } else {
+          errorMessages.push('Invalid zip code. Must be exactly 5 digits.');
+        }
       }
-    }
 
-    // Check Password
-    if (newPassword) {
-      if (newPassword === confirmPassword) {
-        changes.push('Password updated.');
-      } else {
-        errorMessages.push('Passwords do not match.');
+      // Check DOB
+      if (newDOB && newDOB !== profileData.dob) {
+        if (validateDOB(newDOB)) {
+          changes.push(`DOB updated to ${newDOB}`);
+          updateUser({ ...loggedInUser, dob: newDOB });
+        } else {
+          errorMessages.push('You must be at least 18 years old to use this app.');
+        }
       }
-    }
 
-    // Handle errors or success
-    if (errorMessages.length > 0) {
+      // Check Password
+      if (newPassword) {
+        if (newPassword === confirmPassword) {
+          await axios.put('/password', { password: newPassword });
+          changes.push('Password updated.');
+        } else {
+          errorMessages.push('Passwords do not match.');
+        }
+      }
+
+      // Update Profile Picture
+      if (profilePicture && profilePicture !== profileData.profilePicture) {
+        // Logic to upload profile picture can be added here.
+        changes.push('Profile picture updated.');
+      }
+
+      // Handle errors or success
+      if (errorMessages.length > 0) {
+        setErrors(errorMessages);
+      } else if (changes.length > 0) {
+        setMessage(`Profile updated: ${changes.join(' | ')}`);
+        updateUser({
+          ...profileData,
+          email: newEmail,
+          phone: newPhone,
+          zipcode: newZipcode,
+          dob: newDOB,
+          avatar: profilePicture,
+        });
+      } else {
+        setMessage('No changes made.');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      errorMessages.push('An error occurred while updating your profile. Please try again.');
       setErrors(errorMessages);
-    } else if (changes.length > 0) {
-      setMessage(`Profile updated: ${changes.join(' | ')}`);
-    } else {
-      setMessage('No changes made.');
     }
   };
 
@@ -78,9 +150,13 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
     navigate('/main'); 
   };
 
+  if (!profileData) {
+    return <div>Loading...</div>; // Render loading state until profileData is fetched
+  }
+
   return (
     <div className="profile-container">
-      <h2>{loggedInUser.username}'s Profile</h2>
+      <h2>{profileData.username}'s Profile</h2>
 
       <div className="profile-section">
         <div className="profile-picture">
@@ -109,7 +185,7 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
 
       {/* Original Email and Input */}
       <div className="form-group">
-        <label>Email Address (Current: {loggedInUser.email})</label>
+        <label>Email Address (Current: {profileData.email || 'Not Set'})</label>
         <input
           type="email"
           className="form-control"
@@ -143,9 +219,20 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
         />
       </div>
 
+      {/* Original Date of Birth and Input */}
+      <div className="form-group">
+        <label>Date of Birth (Current: {loggedInUser.dob})</label>
+        <input
+          type="date"
+          className="form-control"
+          value={newDOB}
+          onChange={(e) => setNewDOB(e.target.value)}
+        />
+      </div>
+
       {/* New Password fields */}
       <div className="form-group">
-        <label>Password (Current: {'*'.repeat(loggedInUser.address.street.length)})</label> 
+        <label>Password (Current: {'*'.repeat(loggedInUser.password?.length || 0)})</label> 
         <input
           type="password"
           className="form-control"

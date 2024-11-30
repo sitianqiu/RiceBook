@@ -17,10 +17,10 @@ app.use(express.urlencoded({ extended: true }));
 // CORS Configuration
 app.use(
   cors({
-    origin: 'http://localhost:3001', 
-    credentials: true,               
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', 
-    allowedHeaders: 'Content-Type,Authorization', 
+    origin: 'http://localhost:3001',
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type,Authorization',
   })
 );
 
@@ -38,7 +38,7 @@ app.use(
     }),
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // 仅在生产环境中使用 HTTPS
+      secure: false,
       sameSite: 'lax', // 防止跨站请求伪造
       maxAge: 1000 * 60 * 60, // 1 小时
     },
