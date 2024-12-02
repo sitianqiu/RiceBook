@@ -57,7 +57,6 @@ const MainPage = ({ loggedInUser }) => {
       
             setPosts(articles);
             setFollowedUsers(updatedFollowedUsers);
-            console.log('Updated followed users:', updatedFollowedUsers);
           } catch (error) {
             console.error('Error fetching articles:', error);
           }
@@ -171,16 +170,16 @@ const MainPage = ({ loggedInUser }) => {
         if (newFollower) {
             try {
                 const response = await axios.put(`http://localhost:3000/following/${newFollower}`, {}, { withCredentials: true });
-                const updatedFollowedUsers = response.data.following;
-                const updatedArticles = response.data.articles;
+                
+                // Check and ensure response.data.following is an array
+                const updatedFollowedUsers = Array.isArray(response.data.following) ? response.data.following : [];
+                console.log('Updated followed users:', updatedFollowedUsers);
     
                 // Fetch new user info and update the state
                 const userResponse = await axios.get(`http://localhost:3000/profile/${newFollower}`, { withCredentials: true });
-                setFollowedUsers([...followedUsers, userResponse.data]);
     
-                // Update the posts with the new follower's articles
-                setPosts(updatedArticles);
-    
+                setFollowedUsers([...updatedFollowedUsers, userResponse.data]);
+                setPosts(response.data.articles); // Update posts with new follower's articles
                 setNewFollower('');
             } catch (error) {
                 console.error('Error adding follower:', error);
@@ -189,7 +188,7 @@ const MainPage = ({ loggedInUser }) => {
         } else {
             alert('Please enter a username to follow.');
         }
-    };    
+    };
     
 
     const handleUnfollow = async (username) => {
@@ -363,7 +362,7 @@ const MainPage = ({ loggedInUser }) => {
                 <div className="sidebar">
                     <h3>Followed Users</h3>
                     <ul>
-                        {followedUsers.map(user => (
+                        {followedUsers && followedUsers.map(user => (
                             <li key={user.username} className="sidebar-user">
                                 <img src={user.avatar || '/profile.jpeg'} alt={user.username} className="sidebar-profile-img" />
                                 <div className="sidebar-user-info">

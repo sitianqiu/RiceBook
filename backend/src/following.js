@@ -2,6 +2,7 @@ const User = require('./models/User');
 const Article = require('./models/Article');
 const { isLoggedIn } = require('./auth');
 const { mapArticle } = require('./article');
+const Profile = require('./models/Profile');
 
 // Get following list
 const getFollowing = async (req, res) => {
@@ -21,7 +22,6 @@ const getFollowing = async (req, res) => {
 
 // Get articles for followed users and logined-in user
 const getArticlesForFollowedUsers = async (req, res) => {
-  console.log('Called getArticlesForFollowedUsers');
   const username = req.user.username;
 
   try {
@@ -31,18 +31,17 @@ const getArticlesForFollowedUsers = async (req, res) => {
 
     // Combine the logged-in user and followed users into one array
     const authors = [...user.following, username];
-    console.log(`Fetching articles for authors: ${authors}`); 
 
     // Fetch articles written by these authors (author is a string, not an ObjectId)
     const articles = await Article.find({ author: { $in: authors } }).sort({ created: -1 });
-    console.log(`Retrieved articles: ${JSON.stringify(articles, null, 2)}`); // Log retrieved articles
 
     // Fetch profiles of followed users
-    const followedUsers = await User.find({ username: { $in: user.following } });
-    console.log(`Followed users: ${JSON.stringify(followedUsers, null, 2)}`); // Log followed users
+    const followedProfiles = await Profile.find({ username: { $in: user.following } })
+      .select('username avatar headline');
+    console.log(`Followed profiles: ${JSON.stringify(followedProfiles, null, 2)}`);
 
     // Prepare response with articles and followed user info
-    res.send({ articles, followedUsers });
+    res.send({ articles: articles.map(mapArticle), followedUsers: followedProfiles });
   } catch (error) {
     console.error('Error fetching articles and followed user info:', error);
     res.status(500).send({ error: 'Internal server error' });
@@ -75,9 +74,12 @@ const addFollowing = async (req, res) => {
       // Fetch updated articles
       const updatedAuthors = [...user.following, username]
       const updatedArticles = await Article.find({ author: { $in: updatedAuthors } }).sort({ created: -1 });
+      // Fetch updated profiles of followed users
+      const followedProfiles = await Profile.find({ username: { $in: user.following } })
+      .select('username avatar headline');
 
-      res.send({ username, following: user.following, articles: updatedArticles.map(mapArticle) });
-  } catch (error) {
+      res.send({ articles: updatedArticles.map(mapArticle), followedUsers: followedProfiles });
+      } catch (error) {
       console.error('Error adding following:', error);
       res.status(500).send({ error: 'Internal server error' });
   }
@@ -99,11 +101,12 @@ const removeFollowing = async (req, res) => {
     // Fetch updated articles after removing the user
     const updatedAuthors = [...user.following, username];
     const updatedArticles = await Article.find({ author: { $in: updatedAuthors } }).sort({ created: -1 });
+    // Fetch updated profiles of followed users
+    const followedProfiles = await Profile.find({ username: { $in: user.following } })
+    .select('username avatar headline');
 
-
-    res.send({ username, following: user.following, articles: updatedArticles.map(mapArticle) });
-    console.log(`Response sent successfully for unfollow request.`);
-  } catch (error) {
+    res.send({ articles: updatedArticles.map(mapArticle), followedUsers: followedProfiles });
+    } catch (error) {
     console.error('Error removing following:', error);
     res.status(500).send({ error: 'Internal server error' });
   }

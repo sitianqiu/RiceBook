@@ -134,12 +134,6 @@ const ProfilePage = ({ refreshAvatar }) => {
         }
       }
 
-      // Update Profile Picture
-      if (profilePicture && profilePicture !== profileData.profilePicture) {
-        // Logic to upload profile picture can be added here.
-        changes.push('Profile picture updated.');
-      }
-
       // Handle errors or success
       if (errorMessages.length > 0) {
         setErrors(errorMessages);
