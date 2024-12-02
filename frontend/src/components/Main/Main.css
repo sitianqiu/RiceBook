@@ -345,19 +345,15 @@
     color: #007bff;
 }
 
-.article-meta .article-timestamp {
+.article-meta .article-timestamp, .comment-timestamp {
     color: #999;
-}
-
-/* Article Buttons */
-.article-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
 }
 
 /* Edit Button */
 .edit-button {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
     padding: 8px 15px;
     background-color: #ffc107;
     color: white;
@@ -369,6 +365,43 @@
 
 .edit-button:hover {
     background-color: #e0a800;
+}
+
+/* Save Button */
+.save-button {
+    padding: 8px 16px;
+    background-color: #28a745; /* Green color */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.save-button:hover {
+    background-color: #218838;
+}
+
+/* Cancel Button */
+.cancel-edit-button {
+    padding: 8px 16px;
+    background-color: #dc3545; /* Red color */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.cancel-edit-button:hover {
+    background-color: #c82333;
+}
+
+/* Button Group for Save/Cancel */
+.edit-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 /* Comment Input and Send Button */
@@ -423,9 +456,26 @@
     margin-top: 8px;
     font-size: 0.9rem;
     color: #555;
+    display: flex; /* Enables flex layout */
+    justify-content: space-between; /* Spaces out content and timestamp */
+    align-items: center;
 }
 
 .comment strong {
     color: #007bff;
     margin-right: 5px;
+}
+
+.comment-content {
+    flex: 1; /* Ensures the content takes up available space */
+    word-wrap: break-word; /* Allows long text to wrap */
+    overflow: hidden; /* Ensures long content doesn't overflow */
+    text-overflow: ellipsis; /* Truncates overflowing text with ellipsis */
+}
+
+.comment-timestamp {
+    font-size: 0.8rem;
+    color: #888; 
+    white-space: nowrap; 
+    margin-left: 10px; 
 }

@@ -5,14 +5,18 @@ const articleSchema = new mongoose.Schema({
     type: String,
     required: [true, 'author is required'],
   },
-  text: {
+  title: {
     type: String,
-    required: [true, 'text is required'],
+    required: [true, 'title is required'],
   },
-//   image: {
-//     type: String,
-//     default: null,
-//   },
+  body: {
+    type: String,
+    required: [true, 'body is required'],
+  },
+  image: {
+    type: String,
+    default: null,
+  },
   comments: [
     {
       id: { type: Number, required: [true, 'id is required'] },

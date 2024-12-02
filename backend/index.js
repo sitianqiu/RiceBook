@@ -31,16 +31,16 @@ app.options('*', cors());
 app.use(
   session({
     secret: 'secretKey',
-    resave: false, // 仅在必要时保存会话
-    saveUninitialized: false, // 未修改的会话不存储
+    resave: false, // Do not save the session if it is not modified
+    saveUninitialized: false, // Do not save uninitialized sessions
     store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI, // MongoDB URI
+      mongoUrl: process.env.MONGO_URI,
     }),
     cookie: {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax', // 防止跨站请求伪造
-      maxAge: 1000 * 60 * 60, // 1 小时
+      secure: false, // Use true if using HTTPS
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60, // 1 hour
     },
   })
 );
@@ -63,7 +63,7 @@ app.get('/', (req, res) => {
 });
 
 // Import Routes
-require('./src/auth')(app); // No middleware for /register and /login
+require('./src/auth')(app);
 require('./src/profile')(app);
 require('./src/article')(app);
 require('./src/following')(app);
@@ -72,10 +72,6 @@ require('./src/following')(app);
 app.use('/profile', isLoggedIn);
 app.use('/article', isLoggedIn);
 app.use('/following', isLoggedIn);
-
-// Uncomment the following lines if you need the Cloudinary setup
-// const upCloud = require('./src/uploadCloudinary');
-// upCloud.setup(app);
 
 // Export for testing
 module.exports = app;

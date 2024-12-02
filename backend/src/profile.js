@@ -2,6 +2,7 @@ const Profile = require('./models/Profile');
 const { isLoggedIn } = require('./auth');
 const bcrypt = require('bcrypt');
 const User = require('./models/User');
+const { uploadImage } = require('./uploadCloudinary');
 
 // Helper function to retrieve a specific field dynamically
 const getField = async (req, res, field) => {
@@ -38,15 +39,22 @@ const updateField = async (req, res, field) => {
 // Dynamic endpoints for profile
 const getProfile = async (req, res) => {
   const username = req.params.user || req.user.username;
-  console.log(`Fetching profile for user: ${username}`);
-  try {
-    const user = await Profile.findOne({ username });
-    if (!user) return res.status(404).send({ error: 'User not found' });
 
-    res.send(user);
+  try {
+    const profile = await Profile.findOne({ username });
+    const user = await User.findOne({ username });
+
+    if (!profile || !user) {
+      return res.status(404).send({ error: 'User not found.' });
+    }
+
+    res.send({
+      ...profile.toObject(),
+      passwordLength: user.passwordLength, 
+    });
   } catch (error) {
     console.error('Error fetching profile:', error);
-    res.status(500).send({ error: 'Internal server error' });
+    res.status(500).send({ error: 'Internal server error.' });
   }
 };
 
@@ -65,42 +73,9 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// Headline endpoints
-const getHeadline = async (req, res) => {
-  const username = req.params.user || req.user.username;
-  try {
-    const user = await Profile.findOne({ username });
-    if (!user) return res.status(404).send({ error: 'User not found' });
-
-    res.send({ username, headline: user.headline });
-  } catch (error) {
-    console.error('Error fetching headline:', error);
-    res.status(500).send({ error: 'Internal server error' });
-  }
-};
-
-const updateHeadline = async (req, res) => {
-    const username = req.params.user || req.user?.username || req.body.username;
-    const { headline } = req.body;
-  
-    if (!headline) return res.status(400).send({ error: 'Headline is required' });
-  
-    try {
-      const user = await Profile.findOneAndUpdate({ username }, { headline }, { new: true });
-      if (!user) {
-        return res.status(404).send({ error: 'User not found' });
-      }
-  
-      res.send({ username, headline: user.headline });
-    } catch (error) {
-      console.error('Error updating headline:', error);
-      res.status(500).send({ error: 'Internal server error' });
-    }
-};
-
 // Password update endpoint
 const updatePassword = async (req, res) => {
-  const username = req.user.username; // Assuming `req.user` is populated by middleware
+  const username = req.user.username; 
   const { password } = req.body;
 
   if (!password) {
@@ -113,7 +88,7 @@ const updatePassword = async (req, res) => {
 
     const user = await User.findOneAndUpdate(
       { username },
-      { password: hashedPassword, salt },
+      { password: hashedPassword, salt, passwordLength: password.length, },
       { new: true }
     );
 
@@ -124,6 +99,34 @@ const updatePassword = async (req, res) => {
     res.send({ success: true, message: 'Password updated successfully' });
   } catch (error) {
     console.error('Error updating password:', error);
+    res.status(500).send({ error: 'Internal server error' });
+  }
+};
+
+// Avatar upload endpoint
+const updateAvatar = async (req, res) => {
+  const username = req.user.username;
+
+  try {
+    // Ensure there is a file to upload
+    if (!req.fileurl) {
+      return res.status(400).send({ error: 'No image file provided' });
+    }
+
+    // Update avatar in the database
+    const user = await Profile.findOneAndUpdate(
+      { username },
+      { avatar: req.fileurl },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).send({ error: 'User not found' });
+    }
+
+    res.send({ username, avatar: user.avatar });
+  } catch (error) {
+    console.error('Error updating avatar:', error);
     res.status(500).send({ error: 'Internal server error' });
   }
 };
@@ -145,7 +148,7 @@ module.exports = (app) => {
   app.put('/zipcode', isLoggedIn, (req, res) => updateField(req, res, 'zipcode'));
 
   app.get('/avatar/:user?', isLoggedIn, (req, res) => getField(req, res, 'avatar'));
-  app.put('/avatar', isLoggedIn, (req, res) => updateField(req, res, 'avatar'));
+  app.put('/avatar', isLoggedIn, uploadImage('avatar'), updateAvatar);
 
   app.get('/phone/:user?', isLoggedIn, (req, res) => getField(req, res, 'phone'));
   app.put('/phone', isLoggedIn, (req, res) => updateField(req, res, 'phone'));

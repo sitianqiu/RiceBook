@@ -22,7 +22,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
 
   useEffect(() => {
     const fetchUsers = async () => {
-        const usersData = await axios.get('http://localhost:3000/users', {});
+        const usersData = await axios.get('http://localhost:3000/users', {}, { withCredentials: true });
         setUsers(usersData || []);
     };
     fetchUsers(); 
@@ -31,8 +31,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-        const response = await axios.post('http://localhost:3000/login', { username: accountName, password });
-        alert('Login successful!');
+        const response = await axios.post('http://localhost:3000/login', { username: accountName, password }, { withCredentials: true });
         setIsLoggedIn(true);
         setLoggedInUser(response.data);
         navigate('/main');
@@ -78,7 +77,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
               password: newPassword,
           };
 
-          const response = await axios.post('http://localhost:3000/register', payload);
+          const response = await axios.post('http://localhost:3000/register', payload, { withCredentials: true });
 
           // Handle successful registration
           setMessage(`Registration successful for ${response.data.username}!`);

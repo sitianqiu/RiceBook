@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './Main.css';
 import { getPosts, getUsers } from '../../services/mainService';
+import axios from 'axios';
 
 const MainPage = ({ loggedInUser }) => {
-    const storedHeadline = localStorage.getItem('statusHeadline');
-    const [statusHeadline, setStatusHeadline] = useState(
-        localStorage.getItem('statusHeadline') || loggedInUser?.company?.catchPhrase || 'Default Headline'
-      );      
+    const [statusHeadline, setStatusHeadline] = useState('Default Headline');
     const [newStatusHeadline, setNewStatusHeadline] = useState('');
     const [posts, setPosts] = useState([]);
     const [newPostTitle, setNewPostTitle] = useState('');  
@@ -14,129 +12,91 @@ const MainPage = ({ loggedInUser }) => {
     const [newPostImage, setNewPostImage] = useState('');
     const [previewImage, setPreviewImage] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [users, setUsers] = useState([]);
     const [followedUsers, setFollowedUsers] = useState([]);
     const [newFollower, setNewFollower] = useState('');
     const [commentInputs, setCommentInputs] = useState({});
+    const [message, setMessage] = useState('');
+    const [editPostId, setEditPostId] = useState(null);
+    const [editPostTitle, setEditPostTitle] = useState('');
+    const [editPostBody, setEditPostBody] = useState('');
+    const [editPreviewImage, setEditPreviewImage] = useState('');
+    const [avatar, setAvatar] = useState(null); 
+    const [loading, setLoading] = useState(true); 
 
     useEffect(() => {
-        const fetchPostsAndUsers = async () => {
-            const postsResponse = await getPosts(); 
-            const usersResponse = await getUsers();
-            const profileImg = '/profile.jpeg'; 
-            const postImg = '/cat.jpeg';
-        
-            const sortedPosts = postsResponse.sort((a, b) => new Date(b.timestamp || new Date()) - new Date(a.timestamp || new Date()));
-            const isNewUser = !sortedPosts.some(post => post.userId === loggedInUser.id);
-    
-            if (isNewUser) {
-                setPosts([]); 
-            } else {
-                const userPosts = sortedPosts.filter(post => post.userId === loggedInUser.id);
-    
-                const postsWithImagesAndUsers = userPosts.slice(0, 3).map(post => {
-                    const user = usersResponse.find(user => user.id === post.userId);
-                    return {
-                        ...post,
-                        image: postImg,
-                        user: user || loggedInUser,
-                        timestamp: post.timestamp || new Date().toLocaleString(),
-                        comments: post.comments || []
-                    };
-                });
-                const remainingPosts = userPosts.slice(3, 10).map(post => ({
-                    ...post,
-                    user: usersResponse.find(user => user.id === post.userId) || loggedInUser, 
-                    timestamp: post.timestamp || new Date().toLocaleString(), 
-                    comments: post.comments || []
-                }));
-    
-                setPosts([...postsWithImagesAndUsers, ...remainingPosts]);
+        const fetchProfile = async () => {
+            try {
+                const response = await axios.get('http://localhost:3000/profile', { withCredentials: true });
+                const { avatar } = response.data;
+                setAvatar(avatar);
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+                setMessage('Failed to fetch profile data.');
             }
-    
-            let followingUsers = [];
-            if (loggedInUser.id === 9) {
-                followingUsers = [
-                    usersResponse.find(user => user.id === 10),
-                    usersResponse.find(user => user.id === 1),
-                    usersResponse.find(user => user.id === 2),
-                ];
-            } else if (loggedInUser.id === 10) {
-                followingUsers = usersResponse.slice(0, 3); 
-            } else if (loggedInUser.id === 8) {
-                followingUsers = [
-                    usersResponse.find(user => user.id === 9),
-                    usersResponse.find(user => user.id === 10),
-                    usersResponse.find(user => user.id === 1),
-                ];
-            } else {
-                followingUsers = usersResponse.slice(loggedInUser.id, loggedInUser.id + 3);
-            }
-
-            const userIdsToFetchPosts = [loggedInUser.id, ...followingUsers.map(user => user.id)];
-            const relevantPosts = postsResponse
-                .filter(post => userIdsToFetchPosts.includes(post.userId))
-                .map(post => ({
-                    ...post,
-                    user: usersResponse.find(user => user.id === post.userId) || loggedInUser,
-                    image: postImg,
-                    timestamp: post.timestamp || new Date().toLocaleString(), 
-                    comments: post.comments || []
-                }));
-
-            setPosts(relevantPosts);
-    
-            const followedWithImages = followingUsers.map(user => ({
-                ...user,
-                profileImage: profileImg,
-            }));
-    
-            setFollowedUsers(followedWithImages); 
         };
     
-        fetchPostsAndUsers();
-    }, [loggedInUser]);
-        
-    const handleAddFollower = async () => {
-        if (newFollower) {
-            try {
-                const usersResponse = await getUsers(); 
-                const postsResponse = await getPosts();
-                const existingUser = usersResponse.find(user => user.username === newFollower);
+        fetchProfile();
+    }, []);
     
-                if (existingUser) {
-                    const newFollowerObject = {
-                        ...existingUser,
-                        profileImage: existingUser.profileImage || '/profile.jpeg',
-                    };
-    
-                    setFollowedUsers([...followedUsers, newFollowerObject]);
-    
-                    const followerPosts = postsResponse
-                        .filter(post => post.userId === existingUser.id)
-                        .map(post => ({
-                            ...post,
-                            user: existingUser,
-                            image: '/cat.jpeg',
-                            timestamp: post.timestamp || new Date().toLocaleString(),
-                            comments: post.comments || []
-                        }));
-                    setPosts([...posts, ...followerPosts]);
-    
-                    setNewFollower('');
-                } else {
-                    alert(`User "${newFollower}" does not exist.`);
-                }
-            } catch (error) {
-                console.error("Error fetching users:", error);
-            }
-        }
-    };
-    
+    // Fetch articles from backend
+    useEffect(() => {
+        const fetchArticles = async () => {
+          try {
+            const response = await axios.get('http://localhost:3000/following/articles', { withCredentials: true });
+            const articles = response.data.articles || [];
+            const followedUsers = response.data.followedUsers || [];
+      
+            // Fetch headlines for followed users
+            const updatedFollowedUsers = await Promise.all(
+              followedUsers.map(async (user) => {
+                const headlineResponse = await axios.get(`http://localhost:3000/headline/${user.username}`, { withCredentials: true });
+                return { ...user, headline: headlineResponse.data.headline || 'No headline available' };
+              })
+            );
+      
+            setPosts(articles);
+            setFollowedUsers(updatedFollowedUsers);
+            console.log('Updated followed users:', updatedFollowedUsers);
+          } catch (error) {
+            console.error('Error fetching articles:', error);
+          }
+        };
+      
+        fetchArticles();
+      }, []);
+      
 
-    const handleUnfollow = (userId) => {
-        setFollowedUsers(followedUsers.filter(user => user.id !== userId));
-        setPosts(posts.filter(post => post.userId !== userId));
+    // Handle creating a new article
+    const handlePost = async () => {
+        if (newPostTitle && newPostBody) {
+          try {
+            const formData = new FormData();
+            formData.append('title', newPostTitle);
+            formData.append('body', newPostBody);
+            if (newPostImage) {
+                formData.append('image', newPostImage);
+            }
+
+            const response = await axios.post('http://localhost:3000/article', formData, { 
+                withCredentials: true, 
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }, 
+            });
+      
+            setPosts(response.data.articles);
+            setNewPostTitle('');
+            setNewPostBody('');
+            setNewPostImage('');
+            setPreviewImage('');
+          } catch (error) {
+            console.error('Error creating post:', error);
+            alert('Failed to create the post. Please try again.');
+          }
+        } else {
+          alert('Please fill in both the title and body of the post.');
+        }
     };
 
     const handleImageChange = (e) => {
@@ -147,26 +107,102 @@ const MainPage = ({ loggedInUser }) => {
         }
     };
 
-    const handlePost = () => {
-        if (newPostTitle && newPostBody) {
-            const newArticle = {
-                id: posts.length + 1,
-                title: newPostTitle, 
-                body: newPostBody,
-                userId: loggedInUser?.id,
-                image: previewImage,
-                timestamp: new Date().toLocaleString(),
-                comments: [],
-            };
-            setPosts([newArticle, ...posts]);
-            setNewPostTitle('');  
-            setNewPostBody(''); 
-            setNewPostImage(''); 
-            setPreviewImage(''); 
-        } else {
-            alert('Please fill in both the title and body of the post.');
+    // Handle updating an article
+    const handleEditPost = async (articleId) => {
+        const postToEdit = posts.find((post) => post.id === articleId);
+        if (!postToEdit) return;
+
+        try {
+        const response = await axios.put(
+            `http://localhost:3000/articles/${articleId}`,
+            { text: postToEdit.text },
+            { withCredentials: true }
+        );
+
+        setPosts((prevPosts) =>
+            prevPosts.map((post) => (post.id === articleId ? response.data.articles[0] : post))
+        );
+        setEditPostId(null);
+        } catch (error) {
+        console.error('Error updating article:', error);
         }
     };
+
+    const handleEditImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setEditPreviewImage(URL.createObjectURL(file));
+        }
+    };
+
+    // Handle adding a comment
+    const handleAddComment = async (articleId) => {
+        const commentText = commentInputs[articleId];
+        if (!commentText.trim()) {
+            alert('Please enter comment text.');
+            return;
+        }
+    
+        try {
+            const response = await axios.put(
+                `http://localhost:3000/articles/${articleId}`,
+                { text: commentText, commentId: -1 },        
+                { withCredentials: true }
+            );
+    
+            // Update the post's comments in the state
+            setPosts((prevPosts) =>
+                prevPosts.map((post) =>
+                    post.id === articleId
+                        ? { ...post, comments: response.data.articles[0].comments } // Use updated comments from backend
+                        : post
+                )
+            );
+    
+            // Clear the comment input
+            setCommentInputs((prev) => ({ ...prev, [articleId]: '' }));
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            alert('Failed to add the comment. Please try again.');
+        }
+    };
+    
+    const handleAddFollower = async () => {
+        if (newFollower) {
+            try {
+                const response = await axios.put(`http://localhost:3000/following/${newFollower}`, {}, { withCredentials: true });
+                const updatedFollowedUsers = response.data.following;
+                const updatedArticles = response.data.articles;
+    
+                // Fetch new user info and update the state
+                const userResponse = await axios.get(`http://localhost:3000/profile/${newFollower}`, { withCredentials: true });
+                setFollowedUsers([...followedUsers, userResponse.data]);
+    
+                // Update the posts with the new follower's articles
+                setPosts(updatedArticles);
+    
+                setNewFollower('');
+            } catch (error) {
+                console.error('Error adding follower:', error);
+                alert('Failed to add follower. Please try again.');
+            }
+        } else {
+            alert('Please enter a username to follow.');
+        }
+    };    
+    
+
+    const handleUnfollow = async (username) => {
+        try {
+            const response = await axios.delete(`http://localhost:3000/following/${username}`, { withCredentials: true });
+            setFollowedUsers(response.data.following);
+            setPosts(response.data.articles);
+        } catch (error) {
+            console.error('Error unfollowing user:', error);
+            alert('Failed to unfollow user. Please try again.');
+        }
+    };
+    
 
     const filteredPosts = posts.filter(post =>
         post.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -181,15 +217,89 @@ const MainPage = ({ loggedInUser }) => {
         setPreviewImage('');
     };
 
-    const handleUpdateStatus = () => {
+    // Fetch headline on mount
+    useEffect(() => {
+        const fetchHeadline = async () => {
+            try {
+                const response = await axios.get('http://localhost:3000/headline', { withCredentials: true });
+                const fetchedHeadline = response.data.headline || 'Default Headline';
+                setStatusHeadline(fetchedHeadline);
+            } catch (error) {
+                console.error('Error fetching headline:', error);
+                setMessage('Failed to fetch status headline. Using default headline.');
+            }
+        };
+
+        fetchHeadline();
+    }, []);
+
+    const handleUpdateStatus = async () => {
         if (newStatusHeadline) {
-            setStatusHeadline(newStatusHeadline);
-            localStorage.setItem('statusHeadline', newStatusHeadline);
-            setNewStatusHeadline('');
+            try {
+                // Send the updated headline to the backend
+                const response = await axios.put('http://localhost:3000/headline', 
+                { headline: newStatusHeadline }, 
+                { withCredentials: true });
+                
+                const updatedHeadline = response.data.headline;
+                
+                // Update the state with the new headline
+                setStatusHeadline(updatedHeadline);
+                setNewStatusHeadline('');
+                setMessage('Status headline updated successfully!');
+            } catch (error) {
+                console.error('Error updating headline:', error);
+                setMessage('Failed to update status headline. Please try again.');
+            }
         } else {
             alert('Please enter a new status headline.');
         }
     };
+    
+    // Edit Post
+    const handleEditButtonClick = (postId) => {
+        const postToEdit = posts.find(post => post.id === postId);
+        if (postToEdit) {
+            setEditPostId(postId);
+            setEditPostTitle(postToEdit.title);
+            setEditPostBody(postToEdit.body);
+        }
+    };
+    
+    const handleSaveEdit = async () => {
+        if (!editPostTitle.trim() || !editPostBody.trim()) {
+            alert('Title and body cannot be empty.');
+            return;
+        }
+    
+        try {
+            const response = await axios.put(
+                `http://localhost:3000/articles/${editPostId}`,
+                { title: editPostTitle, body: editPostBody },
+                { withCredentials: true }
+            );
+    
+            const updatedPost = response.data.articles[0];
+            setPosts(prevPosts => prevPosts.map(post =>
+                post.id === editPostId ? updatedPost : post
+            ));
+    
+            // Reset edit mode
+            setEditPostId(null);
+            setEditPostTitle('');
+            setEditPostBody('');
+        } catch (error) {
+            console.error('Error saving edited post:', error);
+            alert('Failed to save the changes. Please try again.');
+        }
+    };
+    
+    const handleCancelEdit = () => {
+        setEditPostId(null);
+        setEditPostTitle('');
+        setEditPostBody('');
+    };
+    
 
     const handleCommentChange = (postId, value) => {
         setCommentInputs(prev => ({ ...prev, [postId]: value }));
@@ -211,12 +321,17 @@ const MainPage = ({ loggedInUser }) => {
             setCommentInputs(prev => ({ ...prev, [postId]: '' }));
         }
     };
+
+     // Render loading state
+     if (loading) {
+        return <div>Loading...</div>;
+    }
     
     return (
         <div className="main-page">
             <div className="user-info">
                 <img
-                    src={'/profile.jpeg'} 
+                    src={avatar ||'/profile.jpeg'} 
                     alt="Profile"
                     className="profile-picture"
                 />
@@ -249,15 +364,15 @@ const MainPage = ({ loggedInUser }) => {
                     <h3>Followed Users</h3>
                     <ul>
                         {followedUsers.map(user => (
-                            <li key={`${user.id}-${user.username}`} className="sidebar-user"> {/* Use both id and username for a unique key */}
-                                <img src={user.profileImage || '/profile.jpeg'} alt={user.name} className="sidebar-profile-img" />
+                            <li key={user.username} className="sidebar-user">
+                                <img src={user.avatar || '/profile.jpeg'} alt={user.username} className="sidebar-profile-img" />
                                 <div className="sidebar-user-info">
-                                    <strong className="sidebar-user-name">{user.name}</strong>
+                                    <strong className="sidebar-user-name">{user.username}</strong>
                                     <p className="sidebar-user-status">
-                                        {user.company?.catchPhrase || 'No catch phrase available'}
+                                        {user.headline}
                                     </p>
                                 </div>
-                                <button onClick={() => handleUnfollow(user.id)} className="sidebar-unfollow-button">Unfollow</button>
+                                <button onClick={() => handleUnfollow(user.username)} className="sidebar-unfollow-button">Unfollow</button>
                             </li>
                         ))}
                     </ul>
@@ -317,24 +432,67 @@ const MainPage = ({ loggedInUser }) => {
                     <div className="articles-feed">
                         {filteredPosts.map(post => (
                             <div key={post.id} className="article"> 
-                                {post.image && <img src={post.image} alt="Post" />}
                                 <div className="article-content">
                                     <div className="article-meta">
                                         <span className="article-author">
-                                            {post.user ? post.user.name : loggedInUser.name}
+                                            {post.author}
                                         </span>
-                                        <span className="article-timestamp">{post.timestamp}</span>
+                                        <span className="article-timestamp">{new Date(post.date).toLocaleString()}</span>
                                     </div>
-                                    <h4>{post.title}</h4>
-                                    <p>{post.body}</p>
+                                    {editPostId === post.id ? (
+                                        <>
+                                           <input
+                                                type="text"
+                                                value={editPostTitle}
+                                                onChange={(e) => setEditPostTitle(e.target.value)}
+                                                placeholder="Edit title"
+                                                className="edit-post-title"
+                                            />
+                                            <textarea
+                                                value={editPostBody}
+                                                onChange={(e) => setEditPostBody(e.target.value)}
+                                                placeholder="Edit body"
+                                                className="edit-post-textarea"
+                                            />
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                onChange={handleEditImageChange}  
+                                                aria-label="Upload New Image"
+                                            />
+                                            {editPreviewImage && <img src={editPreviewImage} alt="Edit Preview" className="image-preview" />}
+                                            <div className="edit-buttons">
+                                                <button className="save-button" onClick={handleSaveEdit}>
+                                                    Save
+                                                </button>
+                                                <button className="cancel-edit-button" onClick={handleCancelEdit}>
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <h4>{post.title}</h4>
+                                            <p>{post.body}</p>
+                                            {post.image && <img src={post.image} alt="Post" />}
+                                            <button className="edit-button" onClick={() => handleEditButtonClick(post.id)}>Edit</button>
+                                        </>
+                                    )}
 
                                     {/* Comments Section */}
                                     <div className="comments-section">
-                                        {post.comments && post.comments.map((comment, index) => (
-                                            <div key={`${post.id}-comment-${index}`} className="comment"> 
-                                                <strong>{comment.author}</strong>: {comment.text}
-                                            </div>
-                                        ))}
+                                        {post.comments && post.comments.length > 0 ? (
+                                            post.comments.map((comment, index) => (
+                                                <div key={`${post.id}-comment-${index}`} className="comment">
+                                                    <div className="comment-content">
+                                                        <strong>{comment.author}</strong>: {comment.text}
+                                                    </div>
+                                                    <div className="comment-timestamp">{new Date(comment.date).toLocaleString()}</div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="no-comments">No comments yet.</p>
+                                        )}
                                         <div className="comment-input">
                                             <input
                                                 type="text"
@@ -344,17 +502,12 @@ const MainPage = ({ loggedInUser }) => {
                                             />
                                             <button
                                                 className={`send-button ${commentInputs[post.id] ? 'active' : ''}`}
-                                                onClick={() => handleCommentSubmit(post.id)}
+                                                onClick={() => handleAddComment(post.id)}
                                                 disabled={!commentInputs[post.id]}
                                             >
                                                 Send
                                             </button>
                                         </div>
-                                    </div>
-
-                                    {/* Edit Button */}
-                                    <div className="article-buttons">
-                                        <button className="edit-button">Edit</button>
                                     </div>
                                 </div>
                             </div>

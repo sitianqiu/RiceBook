@@ -6,13 +6,29 @@ import MainPage from './components/Main/MainPage';
 import ProfilePage from './components/Profile/ProfilePage';
 import './App.css';
 
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
   const [loggedInUser, setLoggedInUser] = useState(null); 
   const [logoutMessage, setLogoutMessage] = useState(''); 
 
+    // Function to update the loggedInUser's avatar
+    const refreshAvatar = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/profile', {
+          credentials: 'include',
+        });
+        const data = await response.json();
+        setLoggedInUser((prevUser) => ({
+          ...prevUser,
+          avatar: data.avatar,
+        }));
+      } catch (error) {
+        console.error('Error refreshing avatar:', error);
+      }
+    };
+
   const toUpdateUser = (updatedUser) => {
-    alert('Profile updated for this session.');
     setLoggedInUser(updatedUser); 
   };
 
@@ -28,7 +44,7 @@ function App() {
               
               {/* Protect the main page and profile page */}
               <Route path="/main" element={isLoggedIn ? <MainPage loggedInUser={loggedInUser} /> : <Navigate to="/" />} />
-              <Route path="/profile" element={isLoggedIn ? <ProfilePage loggedInUser={loggedInUser} updateUser={toUpdateUser}/> : <Navigate to="/" />} />
+              <Route path="/profile" element={isLoggedIn ? <ProfilePage refreshAvatar={refreshAvatar} />: <Navigate to="/" />} />
 
               {/* Redirect any undefined routes to the LandingPage */}
               <Route path="*" element={<Navigate to="/" />} />

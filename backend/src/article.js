@@ -1,14 +1,23 @@
 const Article = require('./models/Article');
 const { isLoggedIn } = require('./auth');
+const { uploadImage } = require('./uploadCloudinary');
+const mongoose = require('mongoose');
+
 
 // Map article object for response
 const mapArticle = (article) => ({
   id: article._id,
   author: article.author,
-  text: article.text,
-//   image: article.image,
+  title: article.title,
+  body: article.body,
+  image: article.image,
   date: article.created,
-  comments: article.comments,
+  comments: (article.comments || []).map((comment) => ({
+    id: comment.id,
+    text: comment.text,
+    author: comment.author,
+    date: comment.created,
+  })),
 });
 
 // Dynamic: Get articles or a specific article by ID or username
@@ -17,9 +26,12 @@ const getArticles = async (req, res) => {
     const articleId = req.params.id;
     const { username } = req.user;
     const { offset = 0, limit = 10 } = req.query;
-
+    console.log('Fetching articles for:', username);
 
     if (articleId) {
+      if (!mongoose.Types.ObjectId.isValid(articleId)) {
+        return res.status(400).send({ error: 'Invalid Article ID format' });
+      }
       const article = await Article.findById(articleId);
       if (!article) return res.status(404).send({ error: 'Article not found' });
 
@@ -45,28 +57,34 @@ const getArticles = async (req, res) => {
 
 // Dynamic: Post a new article
 const postArticle = async (req, res) => {
-  const { text } = req.body;
+  const { title, body } = req.body;
   const username = req.user?.username || req.body.username;
+  console.log('Request body:', req.body);
+  console.log('Received file URL:', req.fileurl);
+  console.log('Received file ID:', req.fileid);
 
   if (!username) {
-      console.error('Username is missing');
-      return res.status(400).send({ error: 'Username is required' });
+    console.error('Username is missing');
+    return res.status(400).send({ error: 'Username is required' });
   }
 
-  if (!text) {
-      console.error('Text is missing');
-      return res.status(400).send({ error: 'Text is required to create an article' });
+  if (!title || !body) {
+    console.error('Title or body is missing');
+    return res.status(400).send({ error: 'Title and body are required to create an article' });
   }
 
   try {
-      const newArticle = new Article({ text, author: username });
-      await newArticle.save();
+    console.log('Received file URL:', req.fileurl);
+    const imageUrl = req.fileurl || null;
+    const newArticle = new Article({ title, body, author: username, image: imageUrl, });
+    await newArticle.save();
+    console.log('Saved article:', newArticle);
 
-      const articles = await Article.find({ author: username }).sort({ created: -1 });
-      res.status(201).send({ articles: articles.map(mapArticle) });
+    const articles = await Article.find({ author: username }).sort({ created: -1 });
+    res.status(201).send({ articles: articles.map(mapArticle) });
   } catch (error) {
-      console.error('Error creating article:', error);
-      res.status(500).send({ error: 'Internal server error' });
+    console.error('Error creating article:', error);
+    res.status(500).send({ error: 'Internal server error' });
   }
 };
 
@@ -74,11 +92,11 @@ const postArticle = async (req, res) => {
 // Dynamic: Update an article or add/update a comment
 const putArticle = async (req, res) => {
   const { id: articleId } = req.params;
-  const { text, commentId } = req.body;
+  const { title, body, text, commentId } = req.body;
   const username = req.user.username;
 
-  if (!articleId || !text) {
-    return res.status(400).send({ error: 'Article ID and text are required' });
+  if (!articleId || (!title && !body && !text)) {
+    return res.status(400).send({ error: 'Article ID and at least one field (title, body, or text) are required' });
   }
 
   try {
@@ -103,7 +121,8 @@ const putArticle = async (req, res) => {
         return res.status(403).send({ error: 'Permission denied to edit this article' });
       }
 
-      article.text = text;
+      if (title) article.title = title;
+      if (body) article.body = body;
     }
 
     await article.save();
@@ -114,59 +133,14 @@ const putArticle = async (req, res) => {
   }
 };
 
-// Stubbed responses for testing
-const stubbedArticles = [
-  {
-    id: 1,
-    author: 'dummyUser',
-    text: 'This is a stubbed article',
-    // image: null,
-    date: Date.now(),
-    comments: [],
-  },
-];
-
-// Stub: Get articles
-const stubGetArticles = (req, res) => {
-  res.send({
-    articles: stubbedArticles,
-  });
-};
-
-// Stub: Post a new article
-const stubPostArticle = (req, res) => {
-  const newArticle = {
-    id: stubbedArticles.length + 1,
-    author: 'dummyUser',
-    text: 'This is another stubbed article',
-    // image: 'https://dummyimage.com/600x400',
-    date: Date.now(),
-    comments: [],
-  };
-  stubbedArticles.push(newArticle);
-  res.status(201).send({ articles: [newArticle] });
-};
-
-// Stub: Update an article or comment
-const stubPutArticle = (req, res) => {
-  const updatedArticle = {
-    id: req.params.id || 1,
-    author: 'dummyUser',
-    text: 'Updated stubbed article text',
-    // image: null,
-    date: Date.now(),
-    comments: [],
-  };
-  res.send({ articles: [updatedArticle] });
-};
-
-
 // Export routes
 module.exports = (app) => {
   // Dynamic endpoints
   app.get('/article', isLoggedIn, getArticles);
-  app.get('/articles/:id?', isLoggedIn, getArticles); 
-  app.post('/article', isLoggedIn, postArticle); 
+  app.get('/articles/:id', isLoggedIn, getArticles); 
+  app.post('/article', isLoggedIn, uploadImage('image'), postArticle);
   
-  app.put('/articles/:id', stubPutArticle);
+  app.put('/articles/:id', isLoggedIn, putArticle);
 };
+
+module.exports.mapArticle = mapArticle;

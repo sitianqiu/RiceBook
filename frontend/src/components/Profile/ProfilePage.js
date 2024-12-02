@@ -4,7 +4,7 @@ import './Profile.css';
 import { validateEmail, validatePhone, validateZipcode, validateDOB } from '../../services/validation';
 import axios from 'axios';
 
-const ProfilePage = ({ updateUser, loggedInUser }) => {
+const ProfilePage = ({ refreshAvatar }) => {
   const [profileData, setProfileData] = useState(null);
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
@@ -16,23 +16,18 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState([]);
   const navigate = useNavigate();
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
 
   useEffect(() => {
-    // Fetch profile data from the API
     const fetchProfile = async () => {
       try {
         const response = await axios.get('http://localhost:3000/profile', {
-          withCredentials: true, // Send cookies for authentication
+          withCredentials: true,
         });
         const data = response.data;
 
         // Set the fetched profile data
         setProfileData(data);
-        setNewEmail(data.email || '');
-        setNewPhone(data.phone || '');
-        setNewZipcode(data.zipcode || '');
-        setNewDOB(data.dob || '');
-        setProfilePicture(data.avatar || '/profile.jpeg');
       } catch (error) {
         console.error('Error fetching profile:', error);
         setMessage('Failed to fetch profile data. Please try again later.');
@@ -42,19 +37,41 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
     fetchProfile();
   }, []);
 
+  const handleProfilePictureUpload = async () => {
+    const formData = new FormData();
+    formData.append('image', profilePictureFile); // Ensure the selected file is passed here
+  
+    try {
+      const response = await axios.put('http://localhost:3000/avatar', formData, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setMessage('Profile picture updated successfully!');
+      setProfileData((prevData) => ({
+        ...prevData,
+        avatar: response.data.avatar,
+      }));
+      refreshAvatar();
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      setMessage('Failed to update profile picture. Please try again.');
+    }
+  };  
+
   const handleProfilePictureChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProfilePicture(URL.createObjectURL(file));
-      setMessage('Profile picture selected, but no update action yet.');
+      setProfilePicture(URL.createObjectURL(file)); // Preview the image
+      setProfilePictureFile(file); // Store the file for upload
+      setMessage('Profile picture selected, click "Update Picture" to save.');
     }
   };
 
   const updateField = async (field, value) => {
     try {
-      const response = await axios.put('http://localhost:3000/${field}', { [field]: value }, {
-        withCredentials: true, // Send cookies for authentication
-      });
+      const response = await axios.put(`http://localhost:3000/${field}`, { [field]: value }, { withCredentials: true });
       return response.data;
     } catch (error) {
       console.error(`Error updating ${field}:`, error);
@@ -100,8 +117,8 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
       // Check DOB
       if (newDOB && newDOB !== profileData.dob) {
         if (validateDOB(newDOB)) {
+          await updateField('dob', newDOB);
           changes.push(`DOB updated to ${newDOB}`);
-          updateUser({ ...loggedInUser, dob: newDOB });
         } else {
           errorMessages.push('You must be at least 18 years old to use this app.');
         }
@@ -110,7 +127,7 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
       // Check Password
       if (newPassword) {
         if (newPassword === confirmPassword) {
-          await axios.put('/password', { password: newPassword });
+          await axios.put('http://localhost:3000/password', { password: newPassword }, { withCredentials: true });
           changes.push('Password updated.');
         } else {
           errorMessages.push('Passwords do not match.');
@@ -128,14 +145,22 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
         setErrors(errorMessages);
       } else if (changes.length > 0) {
         setMessage(`Profile updated: ${changes.join(' | ')}`);
-        updateUser({
-          ...profileData,
-          email: newEmail,
-          phone: newPhone,
-          zipcode: newZipcode,
-          dob: newDOB,
-          avatar: profilePicture,
-        });
+        setProfileData((prevData) => ({
+          ...prevData,
+          email: newEmail || prevData.email,
+          phone: newPhone || prevData.phone,
+          zipcode: newZipcode || prevData.zipcode,
+          dob: newDOB || prevData.dob,
+          avatar: profilePicture || prevData.avatar,
+        }));
+
+        // Reset input fields
+        setNewEmail('');
+        setNewPhone('');
+        setNewZipcode('');
+        setNewDOB('');
+        setNewPassword('');
+        setConfirmPassword('');
       } else {
         setMessage('No changes made.');
       }
@@ -160,7 +185,7 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
 
       <div className="profile-section">
         <div className="profile-picture">
-          <img src={profilePicture || '/profile.jpeg'} alt="Profile" />
+          <img src={profileData?.avatar || '/profile.jpeg'} alt="Profile" />
         </div>
 
         <br />
@@ -168,6 +193,11 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
         <div className="form-group">
           <label>Upload New Profile Picture</label>
           <input type="file" onChange={handleProfilePictureChange} />
+          {profilePictureFile && (
+            <button className="btn btn-primary" onClick={handleProfilePictureUpload}>
+              Update Picture
+            </button>
+          )}
         </div>
       </div>
 
@@ -197,7 +227,7 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
 
       {/* Original Phone and Input */}
       <div className="form-group">
-        <label>Phone Number (Current: {loggedInUser.phone})</label>
+        <label>Phone Number (Current: {profileData.phone})</label>
         <input
           type="text"
           className="form-control"
@@ -209,7 +239,7 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
 
       {/* Original Zipcode and Input */}
       <div className="form-group">
-        <label>Zipcode (Current: {loggedInUser.address?.zipcode})</label>
+        <label>Zipcode (Current: {profileData.zipcode})</label>
         <input
           type="text"
           className="form-control"
@@ -221,7 +251,7 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
 
       {/* Original Date of Birth and Input */}
       <div className="form-group">
-        <label>Date of Birth (Current: {loggedInUser.dob})</label>
+        <label>Date of Birth (Current: {profileData.dob})</label>
         <input
           type="date"
           className="form-control"
@@ -232,7 +262,7 @@ const ProfilePage = ({ updateUser, loggedInUser }) => {
 
       {/* New Password fields */}
       <div className="form-group">
-        <label>Password (Current: {'*'.repeat(loggedInUser.password?.length || 0)})</label> 
+        <label>Password (Current: {'*'.repeat(profileData?.passwordLength)})</label> 
         <input
           type="password"
           className="form-control"

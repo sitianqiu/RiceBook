@@ -27,10 +27,15 @@ const login = async (req, res) => {
 
         // Save user to session
         req.session.user = { username: user.username };
-        console.log('Session after login:', req.session); 
+        req.session.save((err) => {
+            if (err) {
+                console.error('Error saving session:', err);
+                return res.status(500).send({ error: 'Failed to save session' });
+            }
 
-        // Send success response
-        res.status(200).send({ username: user.username, result: 'success' });
+            console.log('Session after login:', req.session);
+            res.status(200).send({ username: user.username, result: 'success' });
+        });
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).send({ error: 'Internal server error' });
@@ -39,9 +44,6 @@ const login = async (req, res) => {
 
 // Logout
 const logout = (req, res) => {
-    console.log('Session before logout:', req.session);
-    console.log('Cookies received:', req.headers.cookie); // Should log connect.sid
-
     if (!req.session) {
         console.warn('No active session to log out');
         res.clearCookie('connect.sid');
@@ -74,7 +76,7 @@ const register = async (req, res) => {
     try {
         // Validate required fields
         if (!username || !email || !password || !phone || !zipcode || !dob) {
-            return res.status(400).send({ error: 'Missing required fields. Date of birth is mandatory.' });
+            return res.status(400).send({ error: 'Missing required fields.' });
         }
 
         // Check for existing user
@@ -93,6 +95,7 @@ const register = async (req, res) => {
             email,
             password: hashedPassword,
             salt,
+            passwordLength: password.length,
             created: new Date(),
         });
         await newUser.save();

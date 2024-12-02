@@ -9,12 +9,7 @@ const userSchema = new mongoose.Schema({
     },
     email: {type: String},
     following: {
-      type: [
-        {
-          type: String,
-          ref: 'User',
-        },
-      ],
+      type: [String], 
       default: [],
     },
     password: {
@@ -23,6 +18,7 @@ const userSchema = new mongoose.Schema({
     salt: {
       type: String,
     },
+    passwordLength: { type: Number },
     avatar: {
       type: String,
       default: '/profile.jpeg',
