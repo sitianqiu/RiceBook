@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema({
       required: [true, 'Created date is required'],
       default: Date.now,
     },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true, 
+    },
   });
   
 

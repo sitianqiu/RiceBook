@@ -38,7 +38,7 @@ app.use(
     }),
     cookie: {
       httpOnly: true,
-      secure: false, // Use true if using HTTPS
+      secure: process.env.NODE_ENV === 'production', // Use true only in production
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60, // 1 hour
     },
@@ -67,6 +67,7 @@ require('./src/auth')(app);
 require('./src/profile')(app);
 require('./src/article')(app);
 require('./src/following')(app);
+require('./src/googleAuth')(app);
 
 // Apply middleware only to specific routes
 app.use('/profile', isLoggedIn);

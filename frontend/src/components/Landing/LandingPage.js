@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Landing.css';
 import { validateAccountName, validateEmail, validatePhone, validateZipcode, validateDOB } from '../../services/validation';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 
 const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
@@ -91,6 +92,34 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
       }
     };
 
+    const handleGoogleSuccess = async (credentialResponse) => {
+      console.log('Google login succeeded, received credentialResponse:', credentialResponse);
+      try {
+        const { credential } = credentialResponse;
+        console.log('Sending credential to backend:', credential);
+        const response = await axios.post(
+          'http://localhost:3000/google',
+          { token: credential },
+          { withCredentials: true }
+        );
+  
+        setIsLoggedIn(true);
+        setLoggedInUser(response.data);
+        navigate('/main')
+      } catch (error) {
+        console.error('Google login failed:', error);
+        alert('Google login failed. Please try again.');
+      }
+    };
+  
+    const handleGoogleFailure = () => {
+      alert('Google login failed. Please try again.');
+    };
+
+    useEffect(() => {
+        console.log('Frontend Google Client ID:', process.env.REACT_APP_GOOGLE_CLIENT_ID);
+    }, []);
+
     return (
         <div className="container">
         {logoutMessage && <p className="logout-message">{logoutMessage}</p>}
@@ -122,6 +151,17 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
             </div>
             <button type="submit" className="btn btn-primary">Login</button>
             </form>
+
+            <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+            <div>
+              <h2>Login with Google</h2>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleFailure}
+              />
+            </div>
+          </GoogleOAuthProvider>
+
         </div>
 
         <div className="registration-form">

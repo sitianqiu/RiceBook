@@ -25,11 +25,9 @@ const profileSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: [true, 'Phone is required'],
   },
   zipcode: {
     type: String,
-    required: [true, 'Zipcode is required'],
   },
   avatar: {
     type: String,

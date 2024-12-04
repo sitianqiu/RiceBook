@@ -23,6 +23,7 @@
     "es6-promise": "^4.2.8",
     "express": "^4.21.1",
     "express-session": "^1.18.1",
+    "google-auth-library": "^9.15.0",
     "isomorphic-fetch": "^3.0.0",
     "md5": "^2.3.0",
     "mongoose": "^8.8.2",

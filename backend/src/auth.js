@@ -5,6 +5,9 @@ const express = require('express');
 
 // Middleware
 const isLoggedIn = (req, res, next) => {
+    console.log('Checking session middleware...');
+    console.log('Session content:', req.session); // Log the entire session object
+    console.log('Session ID:', req.sessionID);
     if (!req.session || !req.session.user) {
         console.error('Unauthorized request: No active session');
         return res.status(401).send({ error: 'Unauthorized' });
@@ -140,7 +143,6 @@ module.exports = (app) => {
   app.post('/register', register);
   app.get('/users', getUsers);
   app.put('/logout', isLoggedIn, logout);
-  app.use(isLoggedIn); 
 };
 
-module.exports.isLoggedIn = isLoggedIn; // Export middleware for external use
+module.exports.isLoggedIn = isLoggedIn;
