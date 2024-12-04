@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
-import { validateEmail, validatePhone, validateZipcode, validateDOB } from '../../services/validation';
+import { validatePhone, validateZipcode, validateDOB } from '../../services/validation';
 import axios from 'axios';
 
 const ProfilePage = ({ refreshAvatar }) => {
   const [profileData, setProfileData] = useState(null);
-  const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newZipcode, setNewZipcode] = useState('');
   const [newDOB, setNewDOB] = useState('');
@@ -84,16 +83,6 @@ const ProfilePage = ({ refreshAvatar }) => {
     let errorMessages = [];
 
     try {
-      // Check Email
-      if (newEmail && newEmail !== profileData.email) {
-        if (validateEmail(newEmail)) {
-          await updateField('email', newEmail);
-          changes.push(`Email updated to ${newEmail}`);
-        } else {
-          errorMessages.push('Invalid email address.');
-        }
-      }
-
       // Check Phone
       if (newPhone && newPhone !== profileData.phone) {
         if (validatePhone(newPhone)) {
@@ -141,7 +130,6 @@ const ProfilePage = ({ refreshAvatar }) => {
         setMessage(`Profile updated: ${changes.join(' | ')}`);
         setProfileData((prevData) => ({
           ...prevData,
-          email: newEmail || prevData.email,
           phone: newPhone || prevData.phone,
           zipcode: newZipcode || prevData.zipcode,
           dob: newDOB || prevData.dob,
@@ -149,7 +137,6 @@ const ProfilePage = ({ refreshAvatar }) => {
         }));
 
         // Reset input fields
-        setNewEmail('');
         setNewPhone('');
         setNewZipcode('');
         setNewDOB('');
@@ -207,17 +194,17 @@ const ProfilePage = ({ refreshAvatar }) => {
       {/* Display Success Message */}
       {message && <div id="message">{message}</div>}
 
-      {/* Original Email and Input */}
+      {/* Display Email */}
       <div className="form-group">
-        <label>Email Address (Current: {profileData.email || 'Not Set'})</label>
+        <label>Email Address</label>
         <input
           type="email"
           className="form-control"
-          placeholder="Enter new email address"
-          value={newEmail}
-          onChange={(e) => setNewEmail(e.target.value)}
+          value={profileData.email || 'Not Set'}
+          readOnly
         />
       </div>
+
 
       {/* Original Phone and Input */}
       <div className="form-group">

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './Main.css';
-import { getPosts, getUsers } from '../../services/mainService';
 import axios from 'axios';
 
 const MainPage = ({ loggedInUser }) => {

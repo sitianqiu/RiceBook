@@ -142,7 +142,6 @@ module.exports = (app) => {
   app.put('/headline', isLoggedIn, (req, res) => updateField(req, res, 'headline'));
 
   app.get('/email/:user?', isLoggedIn, (req, res) => getField(req, res, 'email'));
-  app.put('/email', isLoggedIn, (req, res) => updateField(req, res, 'email'));
 
   app.get('/zipcode/:user?', isLoggedIn, (req, res) => getField(req, res, 'zipcode'));
   app.put('/zipcode', isLoggedIn, (req, res) => updateField(req, res, 'zipcode'));
