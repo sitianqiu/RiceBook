@@ -117,7 +117,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
     };
 
     useEffect(() => {
-        console.log('Frontend Google Client ID:', process.env.REACT_APP_GOOGLE_CLIENT_ID);
+        console.log('Frontend Google Client ID:', '272365865460-cokd54de8n0rqehlapp0idhoseab6ic4.apps.googleusercontent.com');
     }, []);
 
     return (
@@ -152,7 +152,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
             <button type="submit" className="btn btn-primary">Login</button>
             </form>
 
-            <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+            <GoogleOAuthProvider clientId={'272365865460-cokd54de8n0rqehlapp0idhoseab6ic4.apps.googleusercontent.com'}>
             <div>
               <h2>Login with Google</h2>
               <GoogleLogin

@@ -3,12 +3,12 @@ const User = require('./models/User');
 const Profile = require('./models/Profile');
 
 const redirectURI = process.env.NODE_ENV === 'production'
-  ? 'https://your-heroku-app.herokuapp.com/auth/google/callback'
+  ? 'https://rbqserver-742880fd6875.herokuapp.com/auth/google/callback'
   : 'http://localhost:3000/auth/google/callback';
 
 const client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
+  '272365865460-cokd54de8n0rqehlapp0idhoseab6ic4.apps.googleusercontent.com',
+  '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',
   redirectURI
 );
 
@@ -17,7 +17,7 @@ try {
         console.log('Verifying Google token:', token); // Log the token for debugging
         const ticket = await client.verifyIdToken({
             idToken: token,
-            audience: process.env.GOOGLE_CLIENT_ID,
+            audience: '272365865460-cokd54de8n0rqehlapp0idhoseab6ic4.apps.googleusercontent.com',
         });
         return ticket.getPayload();
     } catch (error) {

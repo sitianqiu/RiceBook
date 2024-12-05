@@ -33,7 +33,7 @@ const getArticlesForFollowedUsers = async (req, res) => {
     const authors = [...user.following, username];
 
     // Fetch articles written by these authors (author is a string, not an ObjectId)
-    const articles = await Article.find({ author: { $in: authors } }).sort({ created: -1 });
+    const articles = await Article.find({ author: { $in: authors } }).sort({ created: -1 }).limit(10);
 
     // Fetch profiles of followed users
     const followedProfiles = await Profile.find({ username: { $in: user.following } })
