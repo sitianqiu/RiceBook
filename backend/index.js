@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 // CORS Configuration
 app.use(
   cors({
-    origin: 'https://rbtrista.surge.sh/',
+    origin: 'https://rbtrista.surge.sh',
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type,Authorization',

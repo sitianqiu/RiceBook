@@ -39,6 +39,7 @@ const login = async (req, res) => {
             console.log('Session after login:', req.session);
             res.status(200).send({ username: user.username, result: 'success' });
         });
+        console.log('session after loggin: ', req.session);
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).send({ error: 'Internal server error' });
