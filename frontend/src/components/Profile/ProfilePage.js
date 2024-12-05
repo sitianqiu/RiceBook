@@ -20,7 +20,7 @@ const ProfilePage = ({ refreshAvatar }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/profile', {
+        const response = await axios.get('https://rbqserver-742880fd6875.herokuapp.com/profile', {
           withCredentials: true,
         });
         const data = response.data;
@@ -41,7 +41,7 @@ const ProfilePage = ({ refreshAvatar }) => {
     formData.append('image', profilePictureFile); // Ensure the selected file is passed here
   
     try {
-      const response = await axios.put('http://localhost:3000/avatar', formData, {
+      const response = await axios.put('https://rbqserver-742880fd6875.herokuapp.com/avatar', formData, {
         withCredentials: true,
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -70,7 +70,7 @@ const ProfilePage = ({ refreshAvatar }) => {
 
   const updateField = async (field, value) => {
     try {
-      const response = await axios.put(`http://localhost:3000/${field}`, { [field]: value }, { withCredentials: true });
+      const response = await axios.put(`https://rbqserver-742880fd6875.herokuapp.com/${field}`, { [field]: value }, { withCredentials: true });
       return response.data;
     } catch (error) {
       console.error(`Error updating ${field}:`, error);
@@ -116,7 +116,7 @@ const ProfilePage = ({ refreshAvatar }) => {
       // Check Password
       if (newPassword) {
         if (newPassword === confirmPassword) {
-          await axios.put('http://localhost:3000/password', { password: newPassword }, { withCredentials: true });
+          await axios.put('https://rbqserver-742880fd6875.herokuapp.com/password', { password: newPassword }, { withCredentials: true });
           changes.push('Password updated.');
         } else {
           errorMessages.push('Passwords do not match.');

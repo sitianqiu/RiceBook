@@ -7,9 +7,9 @@ const redirectURI = process.env.NODE_ENV === 'production'
   : 'http://localhost:3000/auth/google/callback';
 
 const client = new OAuth2Client(
-  '272365865460-cokd54de8n0rqehlapp0idhoseab6ic4.apps.googleusercontent.com',
-  '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',
-  redirectURI
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    redirectURI
 );
 
 const verifyGoogleToken = async (token) => {

@@ -23,7 +23,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
 
   useEffect(() => {
     const fetchUsers = async () => {
-        const usersData = await axios.get('http://localhost:3000/users', {}, { withCredentials: true });
+        const usersData = await axios.get('https://rbqserver-742880fd6875.herokuapp.com/users', {}, { withCredentials: true });
         setUsers(usersData || []);
     };
     fetchUsers(); 
@@ -32,7 +32,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-        const response = await axios.post('http://localhost:3000/login', { username: accountName, password }, { withCredentials: true });
+        const response = await axios.post('https://rbqserver-742880fd6875.herokuapp.com/login', { username: accountName, password }, { withCredentials: true });
         setIsLoggedIn(true);
         setLoggedInUser(response.data);
         navigate('/main');
@@ -78,7 +78,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
               password: newPassword,
           };
 
-          const response = await axios.post('http://localhost:3000/register', payload, { withCredentials: true });
+          const response = await axios.post('https://rbqserver-742880fd6875.herokuapp.com/register', payload, { withCredentials: true });
 
           // Handle successful registration
           setMessage(`Registration successful for ${response.data.username}!`);
@@ -98,7 +98,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
         const { credential } = credentialResponse;
         console.log('Sending credential to backend:', credential);
         const response = await axios.post(
-          'http://localhost:3000/google',
+          'https://rbqserver-742880fd6875.herokuapp.com/google',
           { token: credential },
           { withCredentials: true }
         );
@@ -115,10 +115,6 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
     const handleGoogleFailure = () => {
       alert('Google login failed. Please try again.');
     };
-
-    useEffect(() => {
-        console.log('Frontend Google Client ID:', '272365865460-cokd54de8n0rqehlapp0idhoseab6ic4.apps.googleusercontent.com');
-    }, []);
 
     return (
         <div className="container">

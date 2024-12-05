@@ -15,7 +15,7 @@ function App() {
     // Function to update the loggedInUser's avatar
     const refreshAvatar = async () => {
       try {
-        const response = await fetch('http://localhost:3000/profile', {
+        const response = await fetch('https://rbqserver-742880fd6875.herokuapp.com/profile', {
           credentials: 'include',
         });
         const data = await response.json();

@@ -25,7 +25,7 @@ const MainPage = ({ loggedInUser }) => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const response = await axios.get('http://localhost:3000/profile', { withCredentials: true });
+                const response = await axios.get('https://rbqserver-742880fd6875.herokuapp.com/profile', { withCredentials: true });
                 const { avatar } = response.data;
                 setAvatar(avatar);
                 setLoading(false);
@@ -42,14 +42,14 @@ const MainPage = ({ loggedInUser }) => {
     useEffect(() => {
         const fetchArticles = async () => {
           try {
-            const response = await axios.get('http://localhost:3000/following/articles', { withCredentials: true });
+            const response = await axios.get('https://rbqserver-742880fd6875.herokuapp.com/following/articles', { withCredentials: true });
             const articles = response.data.articles || [];
             const followedUsers = response.data.followedUsers || [];
       
             // Fetch headlines for followed users
             const updatedFollowedUsers = await Promise.all(
               followedUsers.map(async (user) => {
-                const headlineResponse = await axios.get(`http://localhost:3000/headline/${user.username}`, { withCredentials: true });
+                const headlineResponse = await axios.get(`https://rbqserver-742880fd6875.herokuapp.com/headline/${user.username}`, { withCredentials: true });
                 return { ...user, headline: headlineResponse.data.headline || 'No headline available' };
               })
             );
@@ -76,7 +76,7 @@ const MainPage = ({ loggedInUser }) => {
                 formData.append('image', newPostImage);
             }
 
-            const response = await axios.post('http://localhost:3000/article', formData, { 
+            const response = await axios.post('https://rbqserver-742880fd6875.herokuapp.com/article', formData, { 
                 withCredentials: true, 
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -112,7 +112,7 @@ const MainPage = ({ loggedInUser }) => {
 
         try {
         const response = await axios.put(
-            `http://localhost:3000/articles/${articleId}`,
+            `https://rbqserver-742880fd6875.herokuapp.com/articles/${articleId}`,
             { text: postToEdit.text },
             { withCredentials: true }
         );
@@ -143,7 +143,7 @@ const MainPage = ({ loggedInUser }) => {
     
         try {
             const response = await axios.put(
-                `http://localhost:3000/articles/${articleId}`,
+                `https://rbqserver-742880fd6875.herokuapp.com/articles/${articleId}`,
                 { text: commentText, commentId: -1 },        
                 { withCredentials: true }
             );
@@ -168,14 +168,14 @@ const MainPage = ({ loggedInUser }) => {
     const handleAddFollower = async () => {
         if (newFollower) {
             try {
-                const response = await axios.put(`http://localhost:3000/following/${newFollower}`, {}, { withCredentials: true });
+                const response = await axios.put(`https://rbqserver-742880fd6875.herokuapp.com/following/${newFollower}`, {}, { withCredentials: true });
                 
                 // Check and ensure response.data.following is an array
                 const updatedFollowedUsers = Array.isArray(response.data.following) ? response.data.following : [];
                 console.log('Updated followed users:', updatedFollowedUsers);
     
                 // Fetch new user info and update the state
-                const userResponse = await axios.get(`http://localhost:3000/profile/${newFollower}`, { withCredentials: true });
+                const userResponse = await axios.get(`https://rbqserver-742880fd6875.herokuapp.com/profile/${newFollower}`, { withCredentials: true });
     
                 setFollowedUsers([...updatedFollowedUsers, userResponse.data]);
                 setPosts(response.data.articles); // Update posts with new follower's articles
@@ -192,7 +192,7 @@ const MainPage = ({ loggedInUser }) => {
 
     const handleUnfollow = async (username) => {
         try {
-            const response = await axios.delete(`http://localhost:3000/following/${username}`, { withCredentials: true });
+            const response = await axios.delete(`https://rbqserver-742880fd6875.herokuapp.com/following/${username}`, { withCredentials: true });
             setFollowedUsers(response.data.following);
             setPosts(response.data.articles);
         } catch (error) {
@@ -219,7 +219,7 @@ const MainPage = ({ loggedInUser }) => {
     useEffect(() => {
         const fetchHeadline = async () => {
             try {
-                const response = await axios.get('http://localhost:3000/headline', { withCredentials: true });
+                const response = await axios.get('https://rbqserver-742880fd6875.herokuapp.com/headline', { withCredentials: true });
                 const fetchedHeadline = response.data.headline || 'Default Headline';
                 setStatusHeadline(fetchedHeadline);
             } catch (error) {
@@ -235,7 +235,7 @@ const MainPage = ({ loggedInUser }) => {
         if (newStatusHeadline) {
             try {
                 // Send the updated headline to the backend
-                const response = await axios.put('http://localhost:3000/headline', 
+                const response = await axios.put('https://rbqserver-742880fd6875.herokuapp.com/headline', 
                 { headline: newStatusHeadline }, 
                 { withCredentials: true });
                 
@@ -272,7 +272,7 @@ const MainPage = ({ loggedInUser }) => {
     
         try {
             const response = await axios.put(
-                `http://localhost:3000/articles/${editPostId}`,
+                `https://rbqserver-742880fd6875.herokuapp.com/articles/${editPostId}`,
                 { title: editPostTitle, body: editPostBody },
                 { withCredentials: true }
             );

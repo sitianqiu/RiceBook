@@ -10,7 +10,7 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn, setLogoutMessage, displayName }) =>
         try {
             // Make a request to the backend to log out
             await axios.put(
-                'http://localhost:3000/logout',
+                'https://rbqserver-742880fd6875.herokuapp.com/logout',
                 {},
                 { withCredentials: true } // Enable sending cookies
             );
