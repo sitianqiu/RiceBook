@@ -22,6 +22,7 @@ RiceBook is a social media platform that allows users to create posts, follow ot
 - **Google OAuth2**: For user authentication with Google accounts.
 - **bcrypt**: For password hashing and security.
 - **cookie-session**: For session management.
+- **Cloudinary**: For storing and managing image uploads.
 - **Heroku**: For backend deployment.
 
 ### **Testing**
@@ -50,7 +51,9 @@ RiceBook is a social media platform that allows users to create posts, follow ot
 ### **Posts**
 - Create, update, and delete posts.
 - Add comments to posts.
-- Upload images with posts.
+- Upload and manage images using **Cloudinary**.
 
 ### **Search**
 - Search for articles by title, body, or author.
+
+---
