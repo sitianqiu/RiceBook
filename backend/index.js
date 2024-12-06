@@ -10,36 +10,31 @@ const { isLoggedIn } = require('./src/auth');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', 1);
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // CORS Configuration
-app.use(
-  cors({
+const corsOptions = {
     origin: 'https://rbtrista.surge.sh',
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type,Authorization',
-  })
-);
+};
 
-// Handle OPTIONS Preflight Requests
-app.options('*', cors());
-
+app.use(cors(corsOptions));
 // Session Configuration
 app.use(
   session({
     secret: 'secretKey',
-    resave: false, // Do not save the session if it is not modified
+    resave: true, // Do not save the session if it is not modified
     saveUninitialized: false, // Do not save uninitialized sessions
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
     }),
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Use true only in production
-      sameSite: 'lax',
+      secure: true, // Use true only in production
+      sameSite: 'none',
       maxAge: 1000 * 60 * 60, // 1 hour
     },
   })
@@ -69,10 +64,10 @@ require('./src/article')(app);
 require('./src/following')(app);
 require('./src/googleAuth')(app);
 
-// Apply middleware only to specific routes
-app.use('/profile', isLoggedIn);
-app.use('/article', isLoggedIn);
-app.use('/following', isLoggedIn);
+// // Apply middleware only to specific routes
+// app.use('/profile', isLoggedIn);
+// app.use('/article', isLoggedIn);
+// app.use('/following', isLoggedIn);
 
 // Export for testing
 module.exports = app;

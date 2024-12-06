@@ -43,6 +43,7 @@ const googleAuth = async (req, res) => {
     }
 
     let user = await User.findOne({ email });
+    let message = 'Google login successful';
     if (!user) {
         user = new User({
             username: profile.name,
@@ -70,12 +71,13 @@ const googleAuth = async (req, res) => {
     } else if (!user.googleId) {
       user.googleId = profile.sub;
       await user.save();
+      message = 'Your Google account has been successfully linked to your existing account.';
     }
 
     req.session.user = { username: user.username };
     req.session.save((err) => {
       if (err) return res.status(500).json({ error: 'Failed to save session' });
-      res.status(200).json({ message: 'Google login successful', user });
+      res.status(200).json({ message, user });
     });
   } catch (error) {
     res.status(400).json({ error: 'Invalid Google token' });

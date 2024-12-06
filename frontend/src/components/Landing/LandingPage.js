@@ -105,6 +105,7 @@ const LandingPage = ({ logoutMessage, setIsLoggedIn, setLoggedInUser }) => {
   
         setIsLoggedIn(true);
         setLoggedInUser(response.data);
+        alert(response.data.message);
         navigate('/main')
       } catch (error) {
         console.error('Google login failed:', error);
